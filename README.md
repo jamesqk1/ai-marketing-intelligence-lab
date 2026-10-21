@@ -1,82 +1,45 @@
-# Player Feedback Digest
+# AI Marketing Intelligence Lab
 
-A personal, non-commercial proof of concept: turning public player feedback from online gaming communities into a short weekly summary of recurring themes, with every finding traceable to its source.
+A series of AI workflows that turn public customer, competitor and market signals into decision-ready intelligence for marketing leaders. Built and tested by James Quinn-Kumar, a marketing leader, to rebuild real marketing jobs with AI and measure whether they hold up.
 
-This repository holds the **collector**: a small Google Apps Script that gathers public reviews, posts and comments once a week into a private Google Sheet. Classification and the weekly summary happen in a separate step.
+## The method
 
-It is part of a personal learning project, the **AI Marketing Intelligence Lab**, where it is the collector for workflow 01, **Customer Intelligence (CI)**. Related private files follow the pattern `CI – <test case> – <item>`; the Apps Script project is named `CI – Chumba – Collector`.
+Every workflow follows the same evaluation-first method:
 
-## How it works
+1. **Do the job by hand first.** Time it, and write down what I expect to find before looking, to catch my own bias.
+2. **Build an answer key** from the manual work.
+3. **Lock the targets before any AI output.** Accuracy, coverage, quality and time, written down and never moved.
+4. **Run the AI and score every run** against the answer key and a written rubric. Settle disagreements one by one; sometimes the AI is right.
+5. **Automate only what passes,** and report what doesn't.
 
-```
-Public sources ──► Collector (this repo, weekly) ──► Private Google Sheet ──► AI classification ──► Weekly summary
-                   Google Apps Script                "Raw" tab                topic, sentiment,      themes + evidence
-                                                                              severity
-```
+## The workflows
 
-| Source | Access | Keys needed | Status |
+| | Workflow | What it does | Result |
 |---|---|---|---|
-| App Store reviews | DataForSEO App Data API (third-party provider) | DataForSEO login | Live |
-| Trustpilot reviews | DataForSEO Business Data API (third-party provider) | DataForSEO login | Live |
-| YouTube comments | YouTube Data API v3, read-only | API key | Live |
-| Reddit posts and comments | Reddit Data API, read-only, application-only OAuth | Reddit app | Awaiting API approval |
+| 01 | [Customer Intelligence](01-customer-intelligence/) | A weekly pipeline: collects public reviews, labels them with AI, and writes a one-page brief with an owner and evidence on every finding | Passed. About 4 hours a week by hand → 5 minutes to read. Labelling targets 5 of 5; brief rubric 4.4 |
+| 02 | [Competitor Intelligence](02-competitor-intelligence/) | An AI agent given a goal, tools and a budget: it decides where to look, which competitor changes matter, and writes a short weekly brief | Failed the locked targets on recall and change detection, mainly on data access. 3 hours → 22 minutes; no false alarms; rubric 4.2 |
 
-A source with no keys is skipped and noted in the Run log, so sources can be switched on one at a time.
+**Workflow 01 automated a job. Workflow 02 delegated a goal.**
 
-Apple's free public review feed was tried first, but it returns an empty list when called from Google's servers, so App Store reviews come through DataForSEO instead.
+## Repository layout
 
-## Data handling
+```
+01-customer-intelligence/
+  collector/          Google Apps Script collector (App Store, Trustpilot, YouTube)
+  prompts/            labelling and brief prompts
+  runbook.md          the weekly run, step by step
+02-competitor-intelligence/
+  prompts/            the agent brief
+  evaluation/         locked targets, definitions and the scorecard
+  runbook.md          the weekly run and the human review
+```
 
-All sources:
-- **No author data.** Reviewer, commenter and poster names, handles, profiles and locations are never stored.
-- **Redaction.** Email addresses, `@handles` and `u/` mentions in text are replaced before saving.
-- **Minimal fields.** Text, rating or score, date, link and the brand or topic it relates to.
-- **Short text skipped.** Items under 10 words are ignored.
-- **Retention.** Rows are deleted automatically after 90 days (30 days for YouTube, in line with YouTube's API data-storage rules).
-- **Private.** Output is a private summary. Source content is not published, sold, licensed or shared.
-- **No training.** Text is categorised by topic and sentiment using an AI model via API, for classification only. It is never used to train or fine-tune a model.
+## Anonymised
 
-Reddit, additionally (to stay inside Reddit's [Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy)):
-- **Read-only.** No posting, commenting, voting or messaging. No bot account.
-- **Small and slow.** One run a week, a hard cap of 90 requests per run, and a 1-second pause between requests.
-- **Narrow scope.** New posts from two subreddits plus a keyword search. See `Config.gs`.
-- **Deletions respected.** Each run re-checks stored items and deletes any that were deleted or removed on Reddit.
-- **No profiling.** The analysis describes what posts are about, not who wrote them. The sensitive-signal check used for other sources is switched off for Reddit data (`welfare_check = N`).
+Brand names are replaced with placeholders throughout: Focal Brand and Competitors A and B in workflow 01; the Lens Brand and Exchanges A to E in workflow 02. Answer keys, labelled data and briefs stay private. Secrets are never stored in code: the collector reads them from Apps Script properties.
 
-## Files
+## Guardrails
 
-| File | Purpose |
-|---|---|
-| `Config.gs` | What to collect: brands, per-source IDs, subreddits, search terms, limits, retention |
-| `Collector.gs` | Entry points (`runWeekly`, `testSources`, `setupWeeklyTriggers`) and shared helpers: redaction, sheet writing, retention, run log |
-| `DataForSEO.gs` | Shared DataForSEO plumbing: posts review tasks, collects results when ready, logs cost |
-| `AppStore.gs` | App Store reviews (via DataForSEO) |
-| `Trustpilot.gs` | Trustpilot reviews (via DataForSEO) |
-| `YouTube.gs` | YouTube comments on recent videos about each brand |
-| `Reddit.gs` | Reddit posts and comments, plus deletion sync |
-| `appsscript.json` | Apps Script manifest (time zone, minimal permissions) |
+Public data only; no logins, scrapers that break site terms, or personal data. AI outputs are reviewed by a person before anything leaves the private workspace, and any competitive claim used externally needs Compliance review. Player-welfare signals in workflow 01 are routed away from marketing and never quoted.
 
-## Raw tab columns
-
-`item_id`, `source`, `channel` (subreddit, app version, video title…), `brand`, `kind` (post, comment, review), `post_date`, `url`, `rating` (stars, where the source has them), `score` (upvotes, likes or helpful votes), `text`, `collected_at`, `welfare_check`.
-
-## Setup
-
-1. Open the Google Sheet, then **Extensions → Apps Script**.
-2. Create one script file per `.gs` file in this repo, with the same names, and paste in their contents.
-3. Optional: in **Project Settings**, tick "Show appsscript.json manifest file" and paste in `appsscript.json` to limit the script's permissions.
-4. In **Project Settings → Script properties**, add the keys for the sources you want:
-   - `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`
-   - `YOUTUBE_API_KEY`
-   - `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USERNAME`
-5. Run `testSources` to check each source. On first run, Google asks you to authorise the script.
-6. Run `postDataForSEOTasks`, wait a few minutes, then run `runWeekly`.
-7. Run `setupWeeklyTriggers` to schedule it: `postDataForSEOTasks` around 5am and `runWeekly` around 6am every Monday.
-
-Each run writes one line per source to the **Run log** tab: requests made, rows added, rows removed and any notes.
-
-**Note:** the collector rewrites the **Raw** tab when it removes rows, so add labels and analysis in a separate tab, not as extra columns in Raw.
-
-## Status
-
-Early proof of concept (v0.4). The analysis method was first validated by hand on a 45-item sample before automating collection.
+A personal, non-commercial project.
