@@ -22,26 +22,28 @@ const CONFIG = {
 
   // Brands are matched by keyword in text (case-insensitive). Per-source identifiers live here too.
   brands: [
+    // Replace these placeholders with your own focal brand and competitors.
+    // The public version is anonymised; the test case was a US sweepstakes casino brand and two competitors.
     {
-      name: 'Chumba',
-      keywords: ['chumba'],
-      trustpilotDomain: 'chumbacasino.com',
+      name: 'Focal Brand',
+      keywords: ['focal brand'],
+      trustpilotDomain: 'focal-brand.example.com',
       appStoreId: null,                        // no app
-      youtubeQuery: '"chumba casino"',
+      youtubeQuery: '"focal brand"',
     },
     {
-      name: 'Crown Coins',
-      keywords: ['crown coins', 'crowncoins'],
-      trustpilotDomain: 'www.crowncoinscasino.com',
-      appStoreId: '6450413462',
-      youtubeQuery: '"crown coins casino"',
+      name: 'Competitor A',
+      keywords: ['competitor a'],
+      trustpilotDomain: 'competitor-a.example.com',
+      appStoreId: '0000000000',                // App Store numeric ID
+      youtubeQuery: '"competitor a"',
     },
     {
-      name: 'Lavish Luck',
-      keywords: ['lavish luck', 'lavishluck'],
-      trustpilotDomain: 'lavishluck.net',
-      appStoreId: '6738905436',
-      youtubeQuery: '"lavish luck"',
+      name: 'Competitor B',
+      keywords: ['competitor b'],
+      trustpilotDomain: 'competitor-b.example.com',
+      appStoreId: '0000000000',
+      youtubeQuery: '"competitor b"',
     },
   ],
 
@@ -52,10 +54,10 @@ const CONFIG = {
     // Subreddits whose new posts are read each run.
     // defaultBrand applies when no brand keyword appears; null means keep only posts that mention a brand.
     subreddits: [
-      { name: 'ChumbaCasinoPt2', defaultBrand: 'Chumba' },
+      { name: 'FocalBrandSubreddit', defaultBrand: 'Focal Brand' },
       { name: 'DailyCashList', defaultBrand: null },
     ],
-    searchQueries: ['"chumba"', '"crown coins"', '"lavish luck"'],
+    searchQueries: ['"focal brand"', '"competitor a"', '"competitor b"'],
     maxPostsForComments: 30,
     maxCommentsPerPost: 50,
   },
